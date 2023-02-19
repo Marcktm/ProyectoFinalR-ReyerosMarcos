@@ -1,0 +1,258 @@
+---
+title: "AnalisisGralMLBB-ReyerosMarcos-RyRStudio"
+author: "Marcos Agustín Reyeros"
+date: "2023-02-19"
+output: 
+  html_document:
+    toc: yes
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+
+  data <- read.csv("./Mlbb_Heroes+ReyerosMarcos.csv", header = TRUE, sep = ",")
+  
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+![](https://scontent.fcor10-4.fna.fbcdn.net/v/t1.6435-9/118874950_601646537169838_387953238605655941_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=730e14&_nc_ohc=7ap3xorFMt8AX_5OxpZ&_nc_ht=scontent.fcor10-4.fna&oh=00_AfBXr1ABbH2qGrBJfTumtnFpekPAeAImyxO2YEKPlNUaew&oe=63FF4B5D)
+
+
+### Descripcion:
+
+En este informe se analizaran las caracateristicas de los personajes del juego
+"Mobile Legends Bang Bang" tanto de manera general como profundizada para entender de mejor manera las variables del juego.
+
+Se menciona acontinuacion que estamos analizando un dataset que de base contiene 
+nombres de personajes, frase, roles, vida, daño, etc y se muestra acontinuacion 
+un pantallazo de algunas columnas.
+```{r, echo = FALSE}
+  data[c(1,4,5,7,8)]
+```
+
+
+
+## Roles
+
+En este juego existen distintos roles con los cuales podemos especializarnos
+en uno de ellos o ir probando y manejar un poco de todo, al ser un juego en equipo es preferente ser especialista en uno y manejar alguno que otro por si 
+la situacion amerita que usemos un rol distinto. Pero si vamos a ser un jugador sin equipo("que juega siempre partidas con desconocidos") es preferible
+manejar todos los roles a pesar de tener un rol de preferencia.
+
+
+```{r, echo = FALSE}
+  ggplot(data, mapping=aes(x = Primary_Role)) +
+  geom_bar(aes(fill = Lane))
+```
+
+En este grafico de barras podemos observar que en el juego hay 6 roles (Asesino, 
+Combatiente, Mago, Tirador, Soporte y Taque) y podemos observar que hay mas combatientes de personajes para usar, lo cual puede reflejar una tendencia del juego a sacar ese tipo de personajes desde que se creo en 2016 hasta la fecha,cada uno de los personajes tiene una determinada linea en la que mejor se desempeña, recordemos que este juego es una MOBA y la siuacion del juego es que cada personaje se hace cargo de una linea, las cuales pueden ser (Linea de ORO, Linea de EXPERIENCIA, Linea MEDIA, JUNGLA, RECORRER) dependiendo tu función sera la forma de recorrer el mapa del juego.
+
+Para que se vea mejor dejo un mapa del juego a continuacion:
+
+![](https://ligadecracks.com/wp-content/uploads/2020/12/RECORRER-300x141.png)
+
+## Valores de referecia
+
+```{r, echo = FALSE}
+data %>% 
+  select(Hp, Hp_Regen, Mana, Mana_Regen, Phy_Damage, Mag_Damage, 
+         Phy_Defence, Mag_Defence, Mov_Speed) %>% 
+  summary(data)
+
+```
+
+Usando la funcion "summary" podemos observar, enfocandonos en el minimo, la media y el maximo que por ejemplo:
+
+* VIDA(Hp): Vemos que de 918 a 2909 hay una diferecia muy grande de nivel de vida entre heroes, esto se debe obviamente al rol del personaje e influye mucho a la hora de ver nuestras preferencias de que rol utilizar.
+
+Igualmente a la hora de elegir tambien tendriamos que tener en cuenta las variables de:
+
+* Recuperación de Vida (Hp_Regen)
+
+* Mana(Magia que usan los magos y otros presonajes que tienen habilidade magicas)
+
+* Recuperción de Mana (Mana_Regen)
+* Daño Fisico (Phy_Damage)
+
+* Daño Magico (Mag_Damage"no tiene registros de valores todo esta iniciallizado en cero")
+
+* Defensa Fisica (Phy_Defence)
+
+* Defensa Magica (Mag_Defence)
+
+* Velocidad de Movimiento (Mov_Speed)
+
+
+## Distincion de Roles
+#### + Mayor Promedio de Vida
+
+```{r, echo = FALSE}
+  data %>% 
+  group_by(Primary_Role) %>%
+  summarise(meanHp = mean(Hp))
+
+```
+
+En promedio los tanques tienen mayor cantidad de vida.
+
+#### + Mayor Promedio de de Ataque Fisico
+
+```{r, echo = FALSE}
+  data %>% 
+  group_by(Primary_Role) %>%
+  summarise( AtaqueFisico = mean(Phy_Damage)) 
+
+```
+
+En promedio los tanques tienen mayor cantidad de ataque fisico.
+
+#### + Mayor Promedio de Velocidad de Movimiento
+
+```{r, echo = FALSE}
+  data %>% 
+  group_by(Primary_Role) %>%
+  summarise( VelocidadMovimiento = mean(Mov_Speed)) 
+  
+
+```
+
+En promedio los asesinos y combatientes tienen mayor cantidad de velocidad de movimiento.
+
+## Analisis PCA
+```{r, include= FALSE}
+library(psych)
+library(devtools)
+library(ggbiplot)
+```
+
+```{r, echo = FALSE}
+  
+
+rownames(data) <- data$Name
+
+borrar <- c("Mana_Regen","Title", "Voice_Line","Release_Date", "Primary_Role","Secondary_Role","Lane", "Mag_Damage", "Name")
+
+mbl2 <- data[ , !names(data) %in% borrar]
+
+
+pca_mbl <- prcomp(mbl2, center = TRUE, scale = TRUE)
+
+names(pca_mbl)
+
+summary(pca_mbl)
+
+  pca_final <- principal(mbl2, nfactors = 2 , rotate= "none")
+
+  pca_final
+
+  Nombres <- data$Name
+
+ggbiplot(pca_mbl, elipse = TRUE, labels = rownames(mbl2), groups = data$Primary_Role)
+
+```
+
+En este grafico se puede obvservar como es la distribucion de los heroes y se puede obsevar como el grupo de Combatientes, Tanques, Asesinos y Tiradores se encuentran del lado izquierdo con mayor Hp(Nivel de Vida), Hp_Regen(Regeneracion de Vida),Phy_Damage(Daño Fisico), Phy_Defence(Defensa Fisica) y Mov_Speed(Velocidad de Movimiento). Mientras que del lado dderecho se encuentran los Magos y Soportes que tienen menor nivel de vida y velocidad de movimiento en promedio pero se distiguen del otro grupo porque usan Mana(Magia).
+
+Hay algunos casos excepcionales que tienen explicación en este caso como por ejemplo :
+
+* Masha: Es un combatiente, que su nivel de vida base es bajo pero tiene una cualidad que para vencerlo hay que bajarle la barra de vida 3 veces, por eso es catalogado como un combatiente ademas de que su especialidad es el combate cuerpo a cuerpo y ademas este combatiente usa Mana entonces no es de extrañar esa posicion en el grafico.
+
+## Heroes Gratis
+
+Al iniciar el juego nos regalaran un personaje el cual tiene su rol que por lo general es un tirador llamado "Layla" a medida que seguimos jugabdo nos van regalando personajes de los distintos roles, estos personajes suelen ser los que fueron lanzados con el juego en el mismo año, a veces nos regalan items como para elegir cual queremos.
+
+Tambien mietras mas jugamos nos dan monedas que al juntar una cantidad determinada podemos cambiarlas por el heroe que quieramos. Por lo general los usuarios suelen buscar videos del personaje que quieren obtener para aprender sobre ellos antes de usarlos. 
+
+Esta lista nos permite saber cuales nos daran gratis o entre cuales nos haran elegir para oobtenerlos gratis y antes de ello seria ideal buscar informacion sobre como manejarlos para disfrutar mas del juego.
+
+
+```{r, echo = FALSE}
+data %>% 
+  select(Release_Date) %>% 
+  filter(Release_Date == "14/07/2016") %>% 
+  mutate(Relevancia = "LANZAMIENTO") %>% 
+  select(Release_Date, Relevancia )
+
+
+```
+
+## Criterios a la hora de comprar heroes
+
+Para el juego hay que tener en cuenta que a la hora de elegir un heroe se puede comprar uno de los que estan disponible o esperar el lanzamiento de un heroe nuevo como saber si esta por llegar un heroe nuevo, a parte de buscar info en las distintas comunidades una forma mas general seria analizar en que mes suelen lanzar un nuevo heroe.
+
+```{r, include= FALSE}
+library(magrittr)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(psych)
+library(devtools)
+library(ggbiplot)
+library(arules)
+library(arulesViz)
+library(lubridate)
+library(gridExtra)
+library(devtools)
+library(e1071)
+library(caTools)
+library(class)
+library(ggplot2)
+
+```
+
+```{r, echo = FALSE}
+data_inicial <- read.csv("Mlbb_Heroes+ReyerosMarcos.csv" , sep = ",")
+
+data_inicial <- data_inicial %>% 
+  mutate(
+    Primary_Role = factor(Primary_Role),
+    Release_Date = as_date(Release_Date, format= "%d/%m/%Y")
+  ) 
+rownames(data_inicial) <- data_inicial$Name
+borrar2 <- c("Title", "Voice_Line", "Secondary_Role", "Lane", "Hp", 
+             "Hp_Regen", "Mana", "Mana_Regen", "Phy_Damage", "Mag_Damage",
+             "Phy_Defence", "Mag_Defence", "Mov_Speed", "Esport_Wins",
+             "Esport_Loss")
+
+data_inicial <- data_inicial[ , !names(data_inicial) %in% borrar2]
+
+data_inicial %>% 
+  mutate(
+    Month = as.factor(month(Release_Date))
+  ) %>% 
+  group_by(Month) %>% 
+  dplyr::summarize(Lanzamientos = n()) %>% 
+  ggplot(aes(x = Month, y = Lanzamientos)) +
+  geom_bar(stat = 'identity', fill = "mistyrose1", show.legend = FALSE, color = "black")+
+  ylab("Lanzamientos")+
+  xlab("Mes")+
+  ggtitle("Lanzamientos por Mes")+
+  theme_bw()
+
+
+```
+
+Aqui podemos observar que el mes de julio(07) es el mes con mas frecuencia de lanzamientos de nuevos heroes por lo cual si estamos cerca de ese mes seria lo ideal esperar un poco para elegir.
+
+Tambien hay que tener en cuenta que la frecuencia de heroes nuevos fue cayendo a lo largo de los años y esto se puede observar en el seguiente grafico.
+
+```{r, echo = FALSE}
+data_inicial %>% 
+  mutate(
+    Year = as.factor(year(Release_Date))
+  ) %>% 
+  group_by(Year) %>% 
+  dplyr::summarize(Lanzamientos = n()) %>% 
+  ggplot(aes(x = Year, y = Lanzamientos)) +
+  geom_bar(stat = 'identity', fill = "mistyrose1", show.legend = FALSE, color = "black")+
+  ylab("Lanzamientos")+
+  xlab("Año")+
+  ggtitle("Lanzamientos por Año")+
+  theme_bw()
+```
+
+

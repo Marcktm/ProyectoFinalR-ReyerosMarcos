@@ -1,0 +1,65 @@
+---
+title: "ProyecetoFinal-V2(MD)-ReyerosMarcos"
+author: "Marcos Reyeros"
+date: "2023-01-30"
+output: 
+  html_document:
+    toc: yes
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+  library(tidyverse)
+  library(ggplot2)
+  library(dplyr)
+  data <- read.csv("./Mlbb_Heroes+ReyerosMarcos.csv", header = TRUE, sep = ",")
+  
+  HeroesLanzm <- data %>% 
+    filter(Release_Date == 2016)
+  
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Analizando Datos de Mobile Legends
+![Portada](https://scontent.fcor10-4.fna.fbcdn.net/v/t1.6435-9/118874950_601646537169838_387953238605655941_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=730e14&_nc_ohc=7ap3xorFMt8AX_5OxpZ&_nc_ht=scontent.fcor10-4.fna&oh=00_AfBXr1ABbH2qGrBJfTumtnFpekPAeAImyxO2YEKPlNUaew&oe=63FF4B5D)
+
+# Heroes de Lanzamiento del JUego
+
+```{r, echo = FALSE}
+  data %>% 
+  select(Name, Release_Date) %>% 
+  filter(Release_Date == 2016) %>% 
+  mutate(Relevancia = "LANZAMIENTO") %>% 
+  select(Name, Release_Date, Relevancia )
+  
+
+```
+
+Fueron estrenados en la fecha de lanzamiento del juego `r nrow(HeroesLanzm)` Heroes.
+
+# Cantidades de heroes por Rol
+
+```{r}
+  ggplot(data, mapping=aes(x = Primary_Role)) +
+  geom_bar(aes(fill = Lane))
+```
+
+En el grafico se muetran la cantidad de heroes por Rol que tienen sin embargo no siempre el Rol de cada heroe hace que el mismo se use siempre en una misma linea como se puede ver. 
+Por ejemplo: Hay Asesinos que van por la linea de Experiencia aunque la mayoria va por la Jungla.
+
+
+# Rol con mas resistencia
+```{r}
+  data %>% 
+  group_by(Primary_Role) %>%
+  summarise(meanHp = mean(Hp)) %>% 
+  
+
+  ggplot(data, mapping=aes(x = Primary_Role, fill = meanHp)) +
+  geom_bar()
+  
+
+```
+
+El color mas claro muestra el Rol con mas resistencia y el mas Oscuro el rol con menos resistencia.
